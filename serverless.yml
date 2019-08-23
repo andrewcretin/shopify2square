@@ -22,6 +22,8 @@ provider:
     REGION: ${self:custom.currentRegion}
     SERVICE: ${self:service}
     ALIAS: ${self:custom.currentAlias}
+    SHOPIFY_KEY: ${file(./envConfig/config.${self:custom.currentStage}.json):shopifyKey}
+    SHOPIFY_PASSWORD: ${file(./envConfig/config.${self:custom.currentStage}.json):shopifyPassword}
 
 package:
   individually: true

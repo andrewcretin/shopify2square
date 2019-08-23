@@ -1,5 +1,6 @@
 # shopify2sqaure
-syncs products, orders, and customers from shopify to square
+- syncs products, orders, and customers from shopify to square. one way sync will only add (not update / remove)
+- to be used when migrating from shopify to square
 
 ### Setup:
 Install Brew:

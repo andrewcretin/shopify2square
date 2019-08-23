@@ -31,6 +31,10 @@ func NewController() (*Controller, error) {
 
 func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 
+	err := c.ShopifyRepo.GetShopifyProducts()
+	if err != nil {
+		return nil, err
+	}
 	return nil, nil
 
 }

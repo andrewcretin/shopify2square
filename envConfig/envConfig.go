@@ -3,10 +3,12 @@ package envConfig
 import "os"
 
 type Environment struct {
-	Stage   string
-	Region  string
-	Service string
-	Alias   string
+	Stage           string
+	Region          string
+	Service         string
+	Alias           string
+	ShopifyKey      string
+	ShopifyPassword string
 }
 
 //noinspection ALL
@@ -22,11 +24,15 @@ func CurrentEnvironment() Environment {
 	}
 	env.Service = os.Getenv("SERVICE")
 	if len(env.Service) == 0 {
-		env.Service = "example-service"
+		env.Service = "shopify2square"
 	}
 	env.Alias = os.Getenv("ALIAS")
 	if len(env.Alias) == 0 {
 		env.Alias = env.Stage
 	}
+
+	env.ShopifyKey = os.Getenv("SHOPIFY_KEY")
+	env.ShopifyPassword = os.Getenv("SHOPIFY_PASSWORD")
+
 	return env
 }
