@@ -11,12 +11,12 @@ clean:
 	rm -rf ./bin ./vendor Gopkg.lock
 
 .PHONY: deploy
-deploy: clean build schema
-	sls deploy --verbose --stage=staging --alias=staging
+deploy: clean build
+	sls deploy --verbose --stage=staging --alias=staging --aws-profile=gsk
 
 .PHONY: deployProd
-deploy: clean build schema
-	sls deploy --verbose --stage=prod --alias=prod
+deployProd: clean build
+	sls deploy --verbose --stage=prod --alias=prod --aws-profile=gsk
 
 .PHONY: plugins
 plugins:
