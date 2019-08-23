@@ -1,0 +1,15 @@
+# Serverless directories
+.serverless
+
+# Serverless Plugins
+node_modules
+
+# golang output binary directory
+bin
+
+# golang vendor (dependencies) directory
+vendor
+
+# environment configuration
+envConfig/config.staging.json
+envConfig/config.prod.json

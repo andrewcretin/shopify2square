@@ -1,0 +1,60 @@
+service: shopify2square
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+frameworkVersion: "=1.45.1"
+
+plugins:
+- serverless-prune-plugin
+- serverless-aws-alias
+- serverless-plugin-log-retention
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: ${self:custom.currentStage}
+  region: ${self:custom.currentRegion}
+  memorySize: 512
+  timeout: 10
+  environment:
+    STAGE: ${self:custom.currentStage}
+    REGION: ${self:custom.currentRegion}
+    SERVICE: ${self:service}
+    ALIAS: ${self:custom.currentAlias}
+
+package:
+  individually: true
+  exclude:
+    - ./**
+
+functions:
+  shopify2square:
+    handler: bin/shopify2square
+    package:
+      include:
+        - bin/shopify2square
+    aliases:
+      - ${self:custom.currentAlias}
+    description: syncs products, orders, and customers from shopify to square
+    events:
+      - schedule:
+          name: shopify2square-${self:custom.currentAlias}
+          description: 'syncs products, orders, and customers from shopify to square'
+          rate: rate(1 hour)
+          enabled: true
+
+custom:
+  service: ${self:service}
+  defaultStage: staging
+  defaultAlias: ${self:custom.currentStage}
+  defaultRegion: us-west-2
+  currentStage: ${opt:stage, self:custom.defaultStage}
+  currentAlias: ${opt:alias, self:custom.defaultAlias}
+  currentRegion: ${opt:region, self:custom.defaultRegion}
+  # for serverless-plugin-log-retention
+  logRetentionInDays: 30
+  # for serverless-prune-plugin:
+  prune:
+    automatic: true
+    number: 3
