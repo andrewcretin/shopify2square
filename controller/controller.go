@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/andrewcretin/shopify2square/models"
 	"github.com/andrewcretin/shopify2square/repository"
 )
@@ -31,10 +32,41 @@ func NewController() (*Controller, error) {
 
 func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 
-	err := c.ShopifyRepo.GetShopifyProducts()
+	shopifyData, err := c.GetShopifyData()
 	if err != nil {
 		return nil, err
 	}
+	fmt.Print(shopifyData)
+
 	return nil, nil
+
+}
+
+func (c *Controller) GetShopifyData() (*models.ShopifySyncData, error) {
+
+	var data models.ShopifySyncData
+
+	// get products
+	products, err := c.ShopifyRepo.GetProducts()
+	if err != nil {
+		return nil, err
+	} else {
+		data.Products = products
+	}
+
+	// get customers
+	customers, err := c.ShopifyRepo.GetCustomers()
+	if err != nil {
+		return nil, err
+	} else {
+		// get customer addresses
+		err = c.ShopifyRepo.GetCustomerAddresses(customers)
+		if err != nil {
+			return nil, err
+		}
+		data.Customers = customers
+	}
+
+	return &data, nil
 
 }
