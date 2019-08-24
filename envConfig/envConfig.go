@@ -3,12 +3,13 @@ package envConfig
 import "os"
 
 type Environment struct {
-	Stage           string
-	Region          string
-	Service         string
-	Alias           string
-	ShopifyKey      string
-	ShopifyPassword string
+	Stage             string
+	Region            string
+	Service           string
+	Alias             string
+	ShopifyKey        string
+	ShopifyPassword   string
+	SquareAccessToken string
 }
 
 //noinspection ALL
@@ -33,6 +34,7 @@ func CurrentEnvironment() Environment {
 
 	env.ShopifyKey = os.Getenv("SHOPIFY_KEY")
 	env.ShopifyPassword = os.Getenv("SHOPIFY_PASSWORD")
+	env.SquareAccessToken = os.Getenv("SQUARE_ACCESS_TOKEN")
 
 	return env
 }

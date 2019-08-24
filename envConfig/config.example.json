@@ -1,3 +1,6 @@
 {
-  "region": "us-west-2"
+  "region": "us-west-2",
+  "shopifyKey": "",
+  "shopifyPassword": "",
+  "companyStartDate": "2018-04-01T00:00:00-06:00"
 }

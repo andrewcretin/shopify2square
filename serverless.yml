@@ -24,6 +24,7 @@ provider:
     ALIAS: ${self:custom.currentAlias}
     SHOPIFY_KEY: ${file(./envConfig/config.${self:custom.currentStage}.json):shopifyKey}
     SHOPIFY_PASSWORD: ${file(./envConfig/config.${self:custom.currentStage}.json):shopifyPassword}
+    SQUARE_ACCESS_TOKEN: ${file(./envConfig/config.${self:custom.currentStage}.json):squareAccessToken}
 
 package:
   individually: true

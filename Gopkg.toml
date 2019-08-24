@@ -32,7 +32,5 @@
   name = "github.com/aws/aws-sdk-go"
 
 [[constraint]]
-#  version = "2.2.0"
-#  branch = "master"
   name = "github.com/bold-commerce/go-shopify"
   source = "github.com/bold-commerce/go-shopify/goshopify"

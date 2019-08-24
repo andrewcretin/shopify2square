@@ -46,6 +46,14 @@ func setupTestEnvironment(t *testing.T) error {
 	} else {
 		t.Errorf("\n must provide a valid 'shopifyPassword' in config file \n")
 	}
+	// set the square access token
+	squareAccessToken, ok := env["squareAccessToken"]
+	if ok {
+		_ = os.Setenv("SQUARE_ACCESS_TOKEN", squareAccessToken)
+	} else {
+		t.Errorf("\n must provide a valid 'squareAccessToken' in config file \n")
+	}
+
 	return nil
 }
 
