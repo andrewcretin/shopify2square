@@ -3,14 +3,15 @@
 - to be used when migrating from shopify to square
 
 ### Setup:
-Install Brew:
-> https://brew.sh/
-
-Use Brew to Install Dep:
-> brew install dep
-
-Use Dep to Install Packages:
-> dep ensure
+- install golang, install brew / dep
+- create aws account / get iam accesss key
+- install serverless / aws cli
+- configure aws cli
+- configure private app in shopify
+- configure private app in ssquare
+- set config file
+- update makefile for appropriate aws-profile
+- run make deploy 
 
 ### MakeFile Commands:
 > make build
