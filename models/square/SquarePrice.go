@@ -1,6 +1,6 @@
 package square
 
-type SquarePrice struct {
+type SquareMoney struct {
 	Amount   int    `json:"amount"`
 	Currency string `json:"currency"`
 }

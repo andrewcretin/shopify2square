@@ -6,6 +6,6 @@ type SquareItemVariation struct {
 	Sku               string                   `json:"sku"`
 	Ordinal           int                      `json:"ordinal"`
 	PricingType       string                   `json:"pricing_type"`
-	PriceMoney        SquarePrice              `json:"price_money"`
+	PriceMoney        SquareMoney              `json:"price_money"`
 	LocationOverrides []SquareLocationOverride `json:"location_overrides"`
 }

@@ -41,27 +41,29 @@ func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
+	// TODO : return objects in channels
+
 	// get all shopify sync data
-	go func() {
+	go func(shd *models.ShopifySyncData) {
 		defer wg.Done()
-		shd, e := c.GetShopifyData()
+		tempShd, e := c.GetShopifyData()
 		if err != nil {
 			err = e
 		} else {
-			shopifyData = shd
+			shd = tempShd
 		}
-	}()
+	}(shopifyData)
 
 	// get all square sync data
-	go func() {
+	go func(sqd *models.SquareSyncData) {
 		defer wg.Done()
-		sqd, e := c.GetSquareData()
+		tempSqd, e := c.GetSquareData()
 		if err != nil {
 			err = e
 		} else {
-			squareData = sqd
+			sqd = tempSqd
 		}
-	}()
+	}(squareData)
 
 	wg.Wait()
 	if err != nil {
@@ -152,47 +154,39 @@ func (c *Controller) GetSquareData() (*models.SquareSyncData, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
-	// get products
-	//go func(d *models.ShopifySyncData) {
-	//	defer wg.Done()
-	//	products, e := c.ShopifyRepo.GetProducts()
-	//	if e != nil {
-	//		err = e
-	//	} else {
-	//		d.Products = products
-	//	}
-	//}(&data)
+	//get products
+	go func(d *models.SquareSyncData) {
+		defer wg.Done()
+		products, categories, e := c.SquareRepo.GetProductsAndCategories()
+		if e != nil {
+			err = e
+		} else {
+			d.Products = products
+			d.Catgories = categories
+		}
+	}(&data)
 
 	// get customers
 	go func(d *models.SquareSyncData) {
 		defer wg.Done()
-		customers, e := c.SquareRepo.GetCustomers()
+		customers, e := c.SquareRepo.GetAllCustomers(nil, nil)
 		if e != nil {
 			err = e
 		} else {
-			// get customer addresses
-			//e = c.ShopifyRepo.GetCustomerAddresses(customers)
-			//if e != nil {
-			//	err = e
-			//}
 			d.Customers = customers
 		}
 	}(&data)
 
-	// get orders
-	//go func(d *models.ShopifySyncData) {
-	//	defer wg.Done()
-	//	opts := goshopify.OrderListOptions{
-	//		Status:  "any",
-	//		CreatedAtMax: time.Now(),
-	//	}
-	//	orders, e := c.ShopifyRepo.GetAllOrders([]goshopify.Order{}, opts)
-	//	if e != nil {
-	//		err = e
-	//	} else {
-	//		d.Orders = orders
-	//	}
-	//}(&data)
+	//get orders
+	go func(d *models.SquareSyncData) {
+		defer wg.Done()
+		orders, e := c.SquareRepo.GetAllOrders()
+		if e != nil {
+			err = e
+		} else {
+			d.Orders = orders
+		}
+	}(&data)
 
 	wg.Wait()
 	if err != nil {

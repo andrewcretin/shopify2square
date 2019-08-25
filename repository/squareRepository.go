@@ -3,7 +3,8 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/andrewcretin/shopify2square/envConfig"
+	"github.com/andrewcretin/shopify2square/httpClient"
+	"github.com/andrewcretin/shopify2square/httpClient/models"
 	"github.com/andrewcretin/shopify2square/models/square"
 	"github.com/parnurzeal/gorequest"
 )
@@ -43,7 +44,7 @@ func (r *SquareRepository) ParseResponse(resp gorequest.Response, body string, r
 				return err
 			}
 		} else {
-			return fmt.Errorf("unable to map response from key: %s", *responseKey)
+			fmt.Printf("\n unable to map response from key: %s \n", *responseKey)
 		}
 	} else {
 		err := json.Unmarshal([]byte(body), &results)
@@ -56,23 +57,158 @@ func (r *SquareRepository) ParseResponse(resp gorequest.Response, body string, r
 
 }
 
-func (r *SquareRepository) GetCustomers() ([]square.SquareCustomer, error) {
+func (r *SquareRepository) GetAllCustomers(customers []square.SquareCustomer, cursor *string) ([]square.SquareCustomer, error) {
+	tempCustomers, tempCursor, err := httpClient.GetSquareCustomers(cursor)
+	if err != nil {
+		return nil, err
+	} else {
+		customers = append(customers, tempCustomers...)
+		if tempCursor != nil {
+			return r.GetAllCustomers(customers, tempCursor)
+		} else {
+			return customers, nil
+		}
+	}
+}
 
-	url := "https://connect.squareup.com/v2/customers"
-	authToken := fmt.Sprintf("Bearer %s", envConfig.CurrentEnvironment().SquareAccessToken)
+func (r *SquareRepository) GetProductsAndCategories() ([]square.SquareItem, []square.SquareCategory, error) {
+	productCatalogItems, err := r.GetEntireProductCatalog(nil, nil)
+	if err != nil {
+		return nil, nil, err
+	} else {
+		// parse product catalog items
+		var items []square.SquareItem
+		var categories []square.SquareCategory
+		itemTypes := []square.SquareCatalogItemType{square.ITEM, square.CATEGORY}
+		interfaces := []interface{}{&items, &categories}
+		err = r.ParseCatalogItems(productCatalogItems, itemTypes, interfaces...)
+		if err != nil {
+			return nil, nil, err
+		}
+		for i := range items {
+			var variations []square.SquareItemVariation
+			err = r.ParseCatalogItems(items[i].VariationCatalogItems, []square.SquareCatalogItemType{square.ITEM_VARIATION}, &variations)
+			if err != nil {
+				return nil, nil, err
+			}
+			items[i].Variations = variations
+		}
+		return items, categories, nil
+	}
+}
 
-	request := gorequest.New()
-	resp, body, errs := request.Get(url).
-		Set("Accept", `application/json`).
-		Set("Authorization", authToken).
-		End()
+func (r *SquareRepository) GetEntireProductCatalog(catalogItems []square.SquareCatalogItem, cursor *string) ([]square.SquareCatalogItem, error) {
+	tempCatalogItems, tempCursor, err := httpClient.GetSquareCatalog(cursor)
+	if err != nil {
+		return nil, err
+	} else {
+		catalogItems = append(catalogItems, tempCatalogItems...)
+		if tempCursor != nil {
+			return r.GetEntireProductCatalog(catalogItems, tempCursor)
+		} else {
+			return catalogItems, nil
+		}
+	}
+}
 
-	var customers []square.SquareCustomer
-	responseKey := "customers"
-	err := r.ParseResponse(resp, body, &responseKey, errs, &customers)
+func (r *SquareRepository) ParseCatalogItems(catalogItems []square.SquareCatalogItem, itemTypes []square.SquareCatalogItemType, results ...interface{}) error {
+
+	if len(itemTypes) != len(results) {
+		return fmt.Errorf("must provide one result interface for every given item type")
+	}
+
+	for i := range itemTypes {
+		var filteredCatalogItemInterfaces []interface{}
+		for j := range catalogItems {
+			if catalogItems[j].Type == itemTypes[i] {
+				switch itemTypes[i] {
+				case square.CATEGORY:
+					filteredCatalogItemInterfaces = append(filteredCatalogItemInterfaces, catalogItems[j].CategoryData)
+				case square.ITEM:
+					filteredCatalogItemInterfaces = append(filteredCatalogItemInterfaces, catalogItems[j].ItemData)
+				case square.ITEM_VARIATION:
+					filteredCatalogItemInterfaces = append(filteredCatalogItemInterfaces, catalogItems[j].ItemVariationData)
+				}
+			}
+		}
+		bytes, err := json.Marshal(filteredCatalogItemInterfaces)
+		if err != nil {
+			return fmt.Errorf("error marshalling item interfaces to bytes. err: %+v", err)
+		}
+		stringData := string(bytes)
+		fmt.Print(stringData)
+		err = json.Unmarshal(bytes, results[i])
+		if err != nil {
+			return fmt.Errorf("error unmarshalling from item interfaces bytes to results interface. err: %+v", err)
+		}
+	}
+
+	return nil
+
+}
+
+func (r *SquareRepository) BatchGetOrders(locationId string, orderIds []string) ([]square.SquareOrder, error) {
+
+	if len(orderIds) > 100 {
+		return nil, fmt.Errorf("only 100 orders can be retrieved at a time")
+	}
+
+	orders, err := httpClient.BatchGetOrders(locationId, orderIds)
 	if err != nil {
 		return nil, err
 	}
-	return customers, nil
+	return orders, nil
+
+}
+
+func (r *SquareRepository) SearchOrders(req models.SearchOrderReq, resp *models.SearchResp) (*models.SearchResp, error) {
+
+	tempResp, err := httpClient.SearchOrders(req)
+	if err != nil {
+		return nil, err
+	} else {
+		// append search results
+		if resp != nil {
+			resp.Orders = append(resp.Orders, tempResp.Orders...)
+			resp.OrderEntries = append(resp.OrderEntries, tempResp.OrderEntries...)
+			resp.Cursor = tempResp.Cursor
+		} else {
+			resp = tempResp
+		}
+
+		// recurse if necesssary
+		if resp.Cursor != nil {
+			req.Cursor = resp.Cursor
+			resp.Cursor = nil
+			return r.SearchOrders(req, resp)
+		} else {
+			return resp, nil
+		}
+	}
+
+}
+
+func (r *SquareRepository) GetAllOrders() ([]square.SquareOrder, error) {
+
+	allLocations, err := httpClient.GetLocations()
+	if err != nil {
+		return nil, err
+	}
+	var locationIds []string
+	for i := range allLocations {
+		locationIds = append(locationIds, allLocations[i].ID)
+	}
+
+	req := models.SearchOrderReq{
+		ReturnEntries: false,
+		Limit:         500,
+		LocationIds:   locationIds,
+		Cursor:        nil,
+	}
+	searchResp, err := r.SearchOrders(req, nil)
+	if err != nil {
+		return nil, err
+	}
+	return searchResp.Orders, nil
 
 }

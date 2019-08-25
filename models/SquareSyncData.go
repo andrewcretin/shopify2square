@@ -5,7 +5,8 @@ import (
 )
 
 type SquareSyncData struct {
-	//Products  []goshopify.Product  `json:"products"`
+	Products  []square.SquareItem     `json:"products"`
+	Catgories []square.SquareCategory `json:"categories"`
 	Customers []square.SquareCustomer `json:"customers"`
-	//Orders    []goshopify.Order    `json:"orders"`
+	Orders    []square.SquareOrder    `json:"orders"`
 }
