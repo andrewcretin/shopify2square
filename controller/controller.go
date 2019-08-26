@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/andrewcretin/shopify2square/models"
 	"github.com/andrewcretin/shopify2square/repository"
 	goshopify "github.com/andrewcretin/shopify2square/src/github.com/bold-commerce/go-shopify"
@@ -36,48 +36,55 @@ func NewController() (*Controller, error) {
 func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 
 	var err error
-	var shopifyData *models.ShopifySyncData
-	var squareData *models.SquareSyncData
+	syncMap := sync.Map{}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	// TODO : return objects in channels
-
 	// get all shopify sync data
-	go func(shd *models.ShopifySyncData) {
+	go func() {
 		defer wg.Done()
-		tempShd, e := c.GetShopifyData()
+		shd, e := c.GetShopifyData()
 		if err != nil {
 			err = e
 		} else {
-			shd = tempShd
+			syncMap.Store("shopifyData", shd)
 		}
-	}(shopifyData)
+	}()
 
 	// get all square sync data
-	go func(sqd *models.SquareSyncData) {
+	go func() {
 		defer wg.Done()
-		tempSqd, e := c.GetSquareData()
+		sqd, e := c.GetSquareData()
 		if err != nil {
 			err = e
 		} else {
-			sqd = tempSqd
+			syncMap.Store("squareData", sqd)
 		}
-	}(squareData)
+	}()
 
 	wg.Wait()
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Print(shopifyData)
-	fmt.Print(squareData)
+	var shopifyData models.ShopifySyncData
+	var squareData models.SquareSyncData
+	shopifyDataInterface, ok := syncMap.Load("shopifyData")
+	if ok {
+		bytes, _ := json.Marshal(shopifyDataInterface)
+		_ = json.Unmarshal(bytes, &shopifyData)
+	}
+	squareDataInterface, ok := syncMap.Load("squareData")
+	if ok {
+		bytes, _ := json.Marshal(squareDataInterface)
+		_ = json.Unmarshal(bytes, &squareData)
+	}
 
-	// handle comparison of shopifyData to squareData
+	// check for new objects
 
-	// update existing data
+	// check existing objects for updates
 
-	// write new data
+	// write/update objects
 
 	return nil, nil
 
@@ -86,26 +93,23 @@ func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 func (c *Controller) GetShopifyData() (*models.ShopifySyncData, error) {
 
 	var err error
-	data := models.ShopifySyncData{}
-
-	// create wait group for each action
-
+	syncMap := sync.Map{}
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
 	// get products
-	go func(d *models.ShopifySyncData) {
+	go func() {
 		defer wg.Done()
 		products, e := c.ShopifyRepo.GetProducts()
 		if e != nil {
 			err = e
 		} else {
-			d.Products = products
+			syncMap.Store("products", products)
 		}
-	}(&data)
+	}()
 
 	// get customers
-	go func(d *models.ShopifySyncData) {
+	go func() {
 		defer wg.Done()
 		customers, e := c.ShopifyRepo.GetCustomers()
 		if e != nil {
@@ -116,12 +120,12 @@ func (c *Controller) GetShopifyData() (*models.ShopifySyncData, error) {
 			if e != nil {
 				err = e
 			}
-			d.Customers = customers
+			syncMap.Store("customers", customers)
 		}
-	}(&data)
+	}()
 
 	// get orders
-	go func(d *models.ShopifySyncData) {
+	go func() {
 		defer wg.Done()
 		opts := goshopify.OrderListOptions{
 			Status:       "any",
@@ -131,13 +135,36 @@ func (c *Controller) GetShopifyData() (*models.ShopifySyncData, error) {
 		if e != nil {
 			err = e
 		} else {
-			d.Orders = orders
+			syncMap.Store("orders", orders)
 		}
-	}(&data)
+	}()
 
 	wg.Wait()
 	if err != nil {
 		return nil, err
+	}
+
+	data := models.ShopifySyncData{}
+	productsInterface, ok := syncMap.Load("products")
+	if ok {
+		var products []goshopify.Product
+		bytes, _ := json.Marshal(productsInterface)
+		_ = json.Unmarshal(bytes, &products)
+		data.Products = products
+	}
+	customerInterface, ok := syncMap.Load("customers")
+	if ok {
+		var customers []goshopify.Customer
+		bytes, _ := json.Marshal(customerInterface)
+		_ = json.Unmarshal(bytes, &customers)
+		data.Customers = customers
+	}
+	ordersInterface, ok := syncMap.Load("orders")
+	if ok {
+		var orders []goshopify.Order
+		bytes, _ := json.Marshal(ordersInterface)
+		_ = json.Unmarshal(bytes, &orders)
+		data.Orders = orders
 	}
 
 	return &data, nil
@@ -162,7 +189,7 @@ func (c *Controller) GetSquareData() (*models.SquareSyncData, error) {
 			err = e
 		} else {
 			d.Products = products
-			d.Catgories = categories
+			d.Categories = categories
 		}
 	}(&data)
 

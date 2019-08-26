@@ -5,8 +5,8 @@ import (
 )
 
 type SquareSyncData struct {
-	Products  []square.SquareItem     `json:"products"`
-	Catgories []square.SquareCategory `json:"categories"`
-	Customers []square.SquareCustomer `json:"customers"`
-	Orders    []square.SquareOrder    `json:"orders"`
+	Products   []square.SquareItem     `json:"products"`
+	Categories []square.SquareCategory `json:"categories"`
+	Customers  []square.SquareCustomer `json:"customers"`
+	Orders     []square.SquareOrder    `json:"orders"`
 }

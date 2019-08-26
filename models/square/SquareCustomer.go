@@ -14,3 +14,8 @@ type SquareCustomer struct {
 	ReferenceID  string        `json:"reference_id"`
 	Note         string        `json:"note"`
 }
+
+type SquareCustomerUpdate struct {
+	Item              SquareCustomer `json:"item"`
+	UpdatedProperties []string       `json:"updatedProperties"`
+}
