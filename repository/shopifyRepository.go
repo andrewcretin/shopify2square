@@ -62,7 +62,7 @@ func (r *ShopifyRepository) GetCustomerAddresses(customers []goshopify.Customer)
 	wg := sync.WaitGroup{}
 	wg.Add(len(customers))
 
-	concurrentOperations := 2
+	concurrentOperations := 1 // should be able to run 2 per second, but getting errors
 	sem := make(chan bool, concurrentOperations)
 
 	for i := range customers {

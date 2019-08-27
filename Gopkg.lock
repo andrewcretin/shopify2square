@@ -47,6 +47,14 @@
   version = "v0.8.1"
 
 [[projects]]
+  digest = "1:7f569d906bdd20d906b606415b7d794f798f91a62fcfb6a4daa6d50690fb7a3f"
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  pruneopts = ""
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:615c827f6a892973a587c754ae5fad7acfc4352657aff23d0238fe0ba2a154df"
   name = "github.com/shopspring/decimal"
   packages = ["."]
@@ -105,6 +113,7 @@
     "github.com/aws/aws-lambda-go/lambda",
     "github.com/google/go-querystring/query",
     "github.com/parnurzeal/gorequest",
+    "github.com/satori/go.uuid",
     "github.com/shopspring/decimal",
     "gopkg.in/jarcoal/httpmock.v1",
   ]

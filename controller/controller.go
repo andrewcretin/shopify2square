@@ -80,13 +80,37 @@ func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 		_ = json.Unmarshal(bytes, &squareData)
 	}
 
-	// check for new objects
+	response := models.SyncResponse{}
 
-	// check existing objects for updates
+	// update customers
+	newCustomers, updatedCustomers := ParseCustomerModifications(shopifyData.Customers, squareData.Customers)
+	err = c.SyncSquareCustomers(newCustomers, updatedCustomers, &response)
+	if err != nil {
+		return nil, err
+	}
 
-	// write/update objects
+	// update products
+	newItems, updatedItems := ParseProductModifications(shopifyData.Products, squareData.Items)
+	err = c.SyncSquareItems(newItems, updatedItems, &response)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	// update categories
+	newCategories, updatedCategories := ParseCategoryModifications(shopifyData.ProductTypes, squareData.Categories)
+	err = c.SyncSquareCategories(newCategories, updatedCategories, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	// update orders
+	newOrders, updatedOrders := ParseOrderModifications(shopifyData.Orders, squareData.Orders)
+	err = c.SyncSquareOrders(newOrders, updatedOrders, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 
 }
 
@@ -104,7 +128,14 @@ func (c *Controller) GetShopifyData() (*models.ShopifySyncData, error) {
 		if e != nil {
 			err = e
 		} else {
+			var productTypes []string
+			for i := range products {
+				if !ArrayContainsString(productTypes, products[i].ProductType) {
+					productTypes = append(productTypes, products[i].ProductType)
+				}
+			}
 			syncMap.Store("products", products)
+			syncMap.Store("productTypes", productTypes)
 		}
 	}()
 
@@ -152,6 +183,13 @@ func (c *Controller) GetShopifyData() (*models.ShopifySyncData, error) {
 		_ = json.Unmarshal(bytes, &products)
 		data.Products = products
 	}
+	productTypesInterface, ok := syncMap.Load("productTypes")
+	if ok {
+		var productTypes []string
+		bytes, _ := json.Marshal(productTypesInterface)
+		_ = json.Unmarshal(bytes, &productTypes)
+		data.ProductTypes = productTypes
+	}
 	customerInterface, ok := syncMap.Load("customers")
 	if ok {
 		var customers []goshopify.Customer
@@ -188,7 +226,7 @@ func (c *Controller) GetSquareData() (*models.SquareSyncData, error) {
 		if e != nil {
 			err = e
 		} else {
-			d.Products = products
+			d.Items = products
 			d.Categories = categories
 		}
 	}(&data)

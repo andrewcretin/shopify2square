@@ -20,3 +20,8 @@ type SquareOrder struct {
 	NetAmounts              SquareOrderMoneyAmount `json:"net_amounts"`
 	CustomerID              string                 `json:"customer_id"`
 }
+
+type SquareOrderUpdate struct {
+	Object            SquareOrder `json:"object"`
+	UpdatedProperties []string    `json:"updatedProperties"`
+}

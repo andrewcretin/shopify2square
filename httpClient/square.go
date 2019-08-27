@@ -7,6 +7,7 @@ import (
 	"github.com/andrewcretin/shopify2square/httpClient/models"
 	"github.com/andrewcretin/shopify2square/models/square"
 	"github.com/parnurzeal/gorequest"
+	"github.com/satori/go.uuid"
 )
 
 func ParseSquareResponse(resp gorequest.Response, body string, responseKeys []string, errs []error, results ...interface{}) error {
@@ -208,5 +209,36 @@ func SearchOrders(req models.SearchOrderReq) (*models.SearchResp, error) {
 	searchResponse.Cursor = respCursor
 
 	return &searchResponse, nil
+
+}
+
+func WriteCustomer(c square.SquareCustomer) error {
+
+	url := "https://connect.squareup.com/v2/customers"
+	authToken := fmt.Sprintf("Bearer %s", envConfig.CurrentEnvironment().SquareAccessToken)
+
+	respBody := struct {
+		square.SquareCustomer
+		IdempotencyKey string `json:"idempotency_key"`
+	}{
+		c,
+		uuid.NewV4().String(),
+	}
+
+	resp, body, errs := gorequest.New().Post(url).
+		Set("Accept", `application/json`).
+		Set("Authorization", authToken).
+		Send(respBody).
+		End()
+
+	var newCustomer square.SquareCustomer
+	responseInterfaces := []interface{}{&newCustomer}
+	keys := []string{"customer"}
+	err := ParseSquareResponse(resp, body, keys, errs, responseInterfaces...)
+	if err != nil {
+		return err
+	}
+	fmt.Print("\n successfully wrote new customer \n")
+	return nil
 
 }

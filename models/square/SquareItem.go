@@ -11,3 +11,8 @@ type SquareItem struct {
 	ProductType           string                `json:"product_type"`
 	SkipModifierScreen    bool                  `json:"skip_modifier_screen"`
 }
+
+type SquareItemUpdate struct {
+	Object            SquareItem `json:"object"`
+	UpdatedProperties []string   `json:"updatedProperties"`
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/andrewcretin/shopify2square/httpClient/models"
 	"github.com/andrewcretin/shopify2square/models/square"
 	"github.com/parnurzeal/gorequest"
+	"sync"
 )
 
 type SquareRepository struct {
@@ -210,5 +211,29 @@ func (r *SquareRepository) GetAllOrders() ([]square.SquareOrder, error) {
 		return nil, err
 	}
 	return searchResp.Orders, nil
+
+}
+
+func (r *SquareRepository) WriteCustomers(customers []square.SquareCustomer) error {
+
+	var err error
+	wg := sync.WaitGroup{}
+	wg.Add(len(customers))
+
+	for i := range customers {
+		go func(c square.SquareCustomer) {
+			defer wg.Done()
+			e := httpClient.WriteCustomer(c)
+			if e != nil {
+				err = e
+			}
+		}(customers[i])
+	}
+
+	wg.Wait()
+	if err != nil {
+		return err
+	}
+	return nil
 
 }
