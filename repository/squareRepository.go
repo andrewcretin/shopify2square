@@ -233,8 +233,8 @@ func (r *SquareRepository) WriteCustomers(customers []square.SquareCustomer) err
 			defer func() {
 				err := b.Consume(1)
 				if err != nil {
-					fmt.Println("Sleep 500ms.")
-					time.Sleep(500 * time.Millisecond)
+					fmt.Println("Sleep 1s.")
+					time.Sleep(1 * time.Second)
 				}
 				wg.Done()
 			}()
