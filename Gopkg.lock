@@ -23,6 +23,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c721efbeaaa1120def62ced0726942eb087994df306cf9a4864718a556e0089e"
+  name = "github.com/joncalhoun/drip"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c0eb27d26abd52c7617ccf9d3cce73ed17a39f56"
+
+[[projects]]
   digest = "1:fe67641b990bdc1802f8a1e462a4924210a8762a8a17b72e09656049c906b871"
   name = "github.com/moul/http2curl"
   packages = ["."]
@@ -112,6 +120,7 @@
   input-imports = [
     "github.com/aws/aws-lambda-go/lambda",
     "github.com/google/go-querystring/query",
+    "github.com/joncalhoun/drip",
     "github.com/parnurzeal/gorequest",
     "github.com/satori/go.uuid",
     "github.com/shopspring/decimal",

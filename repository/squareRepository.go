@@ -6,8 +6,10 @@ import (
 	"github.com/andrewcretin/shopify2square/httpClient"
 	"github.com/andrewcretin/shopify2square/httpClient/models"
 	"github.com/andrewcretin/shopify2square/models/square"
+	"github.com/joncalhoun/drip"
 	"github.com/parnurzeal/gorequest"
 	"sync"
+	"time"
 )
 
 type SquareRepository struct {
@@ -220,9 +222,22 @@ func (r *SquareRepository) WriteCustomers(customers []square.SquareCustomer) err
 	wg := sync.WaitGroup{}
 	wg.Add(len(customers))
 
+	b := drip.Bucket{
+		Capacity:     len(customers),
+		DripInterval: 1 * time.Second,
+		PerDrip:      2,
+	}
+
 	for i := range customers {
 		go func(c square.SquareCustomer) {
-			defer wg.Done()
+			defer func() {
+				err := b.Consume(1)
+				if err != nil {
+					fmt.Println("Sleep 500ms.")
+					time.Sleep(500 * time.Millisecond)
+				}
+				wg.Done()
+			}()
 			e := httpClient.WriteCustomer(c)
 			if e != nil {
 				err = e
@@ -230,6 +245,10 @@ func (r *SquareRepository) WriteCustomers(customers []square.SquareCustomer) err
 		}(customers[i])
 	}
 
+	defer func() {
+		_ = b.Stop()
+	}()
+	_ = b.Start()
 	wg.Wait()
 	if err != nil {
 		return err

@@ -17,17 +17,17 @@ func ArrayContainsString(s []string, e string) bool {
 //noinspection ALL
 func ParseCustomerModifications(shopifyCustomers []goshopify.Customer, squareCustomers []square.SquareCustomer) ([]square.SquareCustomer, []square.SquareCustomerUpdate) {
 
+	// TODO : writing duplicate square customers.. update check isnt working
+
 	var newCustomers []square.SquareCustomer
 	var updatedCustomers []square.SquareCustomerUpdate
 
 	// map all shopify customers to square customers
 	var incomingShopifyCustomers []square.SquareCustomer
 	for i := range shopifyCustomers {
-		if shopifyCustomers[i].State != "disabled" {
-			tempCustomer := square.SquareCustomer{}
-			tempCustomer.InitFromShopifyCustomer(shopifyCustomers[i])
-			incomingShopifyCustomers = append(incomingShopifyCustomers, tempCustomer)
-		}
+		tempCustomer := square.SquareCustomer{}
+		tempCustomer.InitFromShopifyCustomer(shopifyCustomers[i])
+		incomingShopifyCustomers = append(incomingShopifyCustomers, tempCustomer)
 	}
 
 	// put square customers into a map
