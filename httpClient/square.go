@@ -217,7 +217,7 @@ func WriteCustomer(c square.SquareCustomer) error {
 	url := "https://connect.squareup.com/v2/customers"
 	authToken := fmt.Sprintf("Bearer %s", envConfig.CurrentEnvironment().SquareAccessToken)
 
-	respBody := struct {
+	reqBody := struct {
 		square.SquareCustomer
 		IdempotencyKey string `json:"idempotency_key"`
 	}{
@@ -228,7 +228,7 @@ func WriteCustomer(c square.SquareCustomer) error {
 	resp, body, errs := gorequest.New().Post(url).
 		Set("Accept", `application/json`).
 		Set("Authorization", authToken).
-		Send(respBody).
+		Send(reqBody).
 		End()
 
 	var newCustomer square.SquareCustomer

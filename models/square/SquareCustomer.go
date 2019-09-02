@@ -16,6 +16,7 @@ type SquareCustomer struct {
 	Address      SquareAddress `json:"address,omitempty"`
 	PhoneNumber  string        `json:"phone_number,omitempty"`
 	Note         string        `json:"note,omitempty"`
+	ReferenceId  string        `json:"reference_id,omitempty"`
 }
 
 type SquareCustomerUpdate struct {
@@ -38,25 +39,20 @@ func (c *SquareCustomer) InitFromShopifyCustomer(cc goshopify.Customer) {
 	if len(cc.Addresses) > 0 && cc.Addresses[0] != nil {
 		c.Address = SquareAddress{}
 		c.Address.InitFromShopifyAddress(*cc.Addresses[0])
+		c.Address.FirstName = c.GivenName
+		c.Address.LastName = c.FamilyName
 	} else {
 		c.Address = DefaultSquareAddress()
 	}
 	c.PhoneNumber = cc.Phone
 	c.Note = cc.Note
+	c.ReferenceId = fmt.Sprintf("%d", cc.ID)
 
 }
 
 func (c *SquareCustomer) UpdatedProperties(cc SquareCustomer) []string {
 	var updatedProperties []string
-	if c.Id != cc.Id {
-		updatedProperties = append(updatedProperties, "Id")
-	}
-	if !c.CreatedAt.Equal(cc.CreatedAt) {
-		updatedProperties = append(updatedProperties, "CreatedAt")
-	}
-	if !c.UpdatedAt.Equal(cc.UpdatedAt) {
-		updatedProperties = append(updatedProperties, "UpdatedAt")
-	}
+	// ignore Id, CreatedAt, UpdatedAt
 	if c.GivenName != cc.GivenName {
 		updatedProperties = append(updatedProperties, "GivenName")
 	}

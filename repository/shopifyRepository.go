@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/andrewcretin/shopify2square/envConfig"
 	goshopify "github.com/andrewcretin/shopify2square/src/github.com/bold-commerce/go-shopify"
+	"github.com/joncalhoun/drip"
 	"sort"
-	"sync"
 	"time"
 )
 
@@ -59,36 +59,33 @@ func (r *ShopifyRepository) GetCustomers() ([]goshopify.Customer, error) {
 func (r *ShopifyRepository) GetCustomerAddresses(customers []goshopify.Customer) error {
 
 	var err error
-	wg := sync.WaitGroup{}
-	wg.Add(len(customers))
-
-	concurrentOperations := 1 // should be able to run 2 per second, but getting errors
-	sem := make(chan bool, concurrentOperations)
+	b := drip.Bucket{
+		Capacity:     len(customers),
+		DripInterval: 1 * time.Second,
+		PerDrip:      2,
+	}
 
 	for i := range customers {
-		sem <- true
-		go func(c goshopify.Customer) {
-			defer func() {
-				wg.Done()
-				<-sem
-			}()
-			ads, e := r.Client.CustomerAddress.List(c.ID, nil)
-			if e != nil {
-				err = e
-			} else {
-				var addresses []*goshopify.CustomerAddress
-				for i := range ads {
-					addresses = append(addresses, &ads[i])
-				}
-				customers[i].Addresses = addresses
+		e := b.Consume(1)
+		if e != nil {
+			fmt.Println("Sleep 1s.")
+			time.Sleep(1 * time.Second)
+		}
+		ads, e := r.Client.CustomerAddress.List(customers[i].ID, nil)
+		if e != nil {
+			err = e
+		} else {
+			var addresses []*goshopify.CustomerAddress
+			for i := range ads {
+				addresses = append(addresses, &ads[i])
 			}
-		}(customers[i])
+			customers[i].Addresses = addresses
+		}
 	}
-	for i := 0; i < cap(sem); i++ {
-		sem <- true
-	}
-
-	wg.Wait()
+	defer func() {
+		_ = b.Stop()
+	}()
+	_ = b.Start()
 	if err != nil {
 		return err
 	}

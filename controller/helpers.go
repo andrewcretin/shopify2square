@@ -17,8 +17,6 @@ func ArrayContainsString(s []string, e string) bool {
 //noinspection ALL
 func ParseCustomerModifications(shopifyCustomers []goshopify.Customer, squareCustomers []square.SquareCustomer) ([]square.SquareCustomer, []square.SquareCustomerUpdate) {
 
-	// TODO : writing duplicate square customers.. update check isnt working
-
 	var newCustomers []square.SquareCustomer
 	var updatedCustomers []square.SquareCustomerUpdate
 
@@ -33,11 +31,11 @@ func ParseCustomerModifications(shopifyCustomers []goshopify.Customer, squareCus
 	// put square customers into a map
 	squareCustomersMap := make(map[string]square.SquareCustomer, len(squareCustomers))
 	for i := range squareCustomers {
-		squareCustomersMap[squareCustomers[i].Id] = squareCustomers[i]
+		squareCustomersMap[squareCustomers[i].ReferenceId] = squareCustomers[i]
 	}
 
 	for i := range incomingShopifyCustomers {
-		existingCustomer, ok := squareCustomersMap[incomingShopifyCustomers[i].Id]
+		existingCustomer, ok := squareCustomersMap[incomingShopifyCustomers[i].ReferenceId]
 		if ok {
 			// the incoming shopify customer's id matches an existing square customer, check for update
 			updatedProperties := existingCustomer.UpdatedProperties(incomingShopifyCustomers[i])

@@ -58,12 +58,6 @@ func (a *SquareAddress) UpdatedProperties(aa SquareAddress) []string {
 	if a.Country != aa.Country {
 		updatedProperties = append(updatedProperties, "Country")
 	}
-	if a.FirstName != aa.FirstName {
-		updatedProperties = append(updatedProperties, "FirstName")
-	}
-	if a.LastName != aa.LastName {
-		updatedProperties = append(updatedProperties, "LastName")
-	}
 	if a.Organization != aa.Organization {
 		updatedProperties = append(updatedProperties, "Organization")
 	}

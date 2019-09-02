@@ -89,16 +89,16 @@ func (c *Controller) SyncShopifyToSquare() (*models.SyncResponse, error) {
 		return nil, err
 	}
 
-	// update products
-	newItems, updatedItems := ParseProductModifications(shopifyData.Products, squareData.Items)
-	err = c.SyncSquareItems(newItems, updatedItems, &response)
+	// update categories
+	newCategories, updatedCategories := ParseCategoryModifications(shopifyData.ProductTypes, squareData.Categories)
+	err = c.SyncSquareCategories(newCategories, updatedCategories, &response)
 	if err != nil {
 		return nil, err
 	}
 
-	// update categories
-	newCategories, updatedCategories := ParseCategoryModifications(shopifyData.ProductTypes, squareData.Categories)
-	err = c.SyncSquareCategories(newCategories, updatedCategories, &response)
+	// update products
+	newItems, updatedItems := ParseProductModifications(shopifyData.Products, squareData.Items)
+	err = c.SyncSquareItems(newItems, updatedItems, &response)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/andrewcretin/shopify2square/models/square"
 	"github.com/joncalhoun/drip"
 	"github.com/parnurzeal/gorequest"
-	"sync"
 	"time"
 )
 
@@ -219,9 +218,6 @@ func (r *SquareRepository) GetAllOrders() ([]square.SquareOrder, error) {
 func (r *SquareRepository) WriteCustomers(customers []square.SquareCustomer) error {
 
 	var err error
-	wg := sync.WaitGroup{}
-	wg.Add(len(customers))
-
 	b := drip.Bucket{
 		Capacity:     len(customers),
 		DripInterval: 1 * time.Second,
@@ -229,27 +225,21 @@ func (r *SquareRepository) WriteCustomers(customers []square.SquareCustomer) err
 	}
 
 	for i := range customers {
-		go func(c square.SquareCustomer) {
-			defer func() {
-				err := b.Consume(1)
-				if err != nil {
-					fmt.Println("Sleep 1s.")
-					time.Sleep(1 * time.Second)
-				}
-				wg.Done()
-			}()
-			e := httpClient.WriteCustomer(c)
-			if e != nil {
-				err = e
-			}
-		}(customers[i])
+		e := b.Consume(1)
+		if e != nil {
+			fmt.Println("Sleep 1s.")
+			time.Sleep(1 * time.Second)
+		}
+		e = httpClient.WriteCustomer(customers[i])
+		if e != nil {
+			err = e
+		}
 	}
 
 	defer func() {
 		_ = b.Stop()
 	}()
 	_ = b.Start()
-	wg.Wait()
 	if err != nil {
 		return err
 	}
